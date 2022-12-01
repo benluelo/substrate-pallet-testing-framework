@@ -1,4 +1,4 @@
-use core::{fmt::Debug, marker::PhantomData};
+use core::{fmt::Debug, iter, marker::PhantomData};
 
 use crate::{CheckStorage, Diff, Diffable};
 
@@ -20,14 +20,14 @@ impl HList for () {}
 
 impl<Head, Tail> HList for (Head, Tail) where Tail: HList {}
 
-/// Used as an index into an `HList`.
+/// Used as an index into an [`HList`].
 ///
-/// `Here` is 0, pointing to the head of the HList.
+/// `Here` is 0, pointing to the head of the [`HList`].
 ///
 /// Users should normally allow type inference to create this type
 pub enum Here {}
 
-/// Used as an index into an `HList`.
+/// Used as an index into an [`HList`].
 ///
 /// `There<T>` is 1 + `T`.
 ///
@@ -186,6 +186,32 @@ where
 	Tail: DiffableHList,
 {
 	type ChangeSet = (<Head as Diffable>::ChangeSet, <Tail as DiffableHList>::ChangeSet);
+}
+
+// REVIEW(benluelo): Should this be generic? Or should it have an `Item` associated type?
+pub trait HListIntoIterator<T> {
+	type Iterator: Iterator<Item = T>;
+
+	fn into_iter(self) -> Self::Iterator;
+}
+
+impl<T> HListIntoIterator<T> for () {
+	type Iterator = iter::Empty<T>;
+
+	fn into_iter(self) -> Self::Iterator {
+		iter::empty()
+	}
+}
+
+impl<Head, Tail> HListIntoIterator<Head> for (Head, Tail)
+where
+	Tail: HListIntoIterator<Head>,
+{
+	type Iterator = iter::Chain<iter::Once<Head>, Tail::Iterator>;
+
+	fn into_iter(self) -> Self::Iterator {
+		iter::once(self.0).chain(self.1.into_iter())
+	}
 }
 
 /// [`HList`] trait specific to the pallet storages. This is used to define all the storages that

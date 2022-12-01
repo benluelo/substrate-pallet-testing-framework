@@ -1,45 +1,52 @@
-use core::{fmt::Debug, iter, marker::PhantomData};
+#![warn(clippy::pedantic)]
+#![allow(clippy::module_name_repetitions)]
+#![deny(warnings)]
 
-use hlist::{AssertDiffHList, Concat, Concatenated};
+use core::{fmt::Debug, marker::PhantomData};
+
+use hlist::HListIntoIterator;
 
 use crate::{
 	check_storage::CheckStorage,
 	diff::{Diff, Diffable},
 	hlist::{
-		AssertionOutputOf, ExpectedChangesOf, Find, HList, HZippable, PalletStorageHList, Zipped,
+		AssertDiffHList, AssertionOutputOf, Concat, Concatenated, ExpectedChangesOf, Find, HList,
+		HZippable, PalletStorageHList, Zipped,
 	},
 };
 
 pub mod check_storage;
 pub mod diff;
-pub mod hlist;
+mod hlist;
 
 // name is bikeshedding lol
 pub struct AssertableDiffableStorageAction<
 	UncheckedStorages: PalletStorageHList,
 	CheckedStorages: PalletStorageHList,
-	F: FnOnce(),
+	F: FnOnce() -> R,
+	R,
 > {
 	f: F,
 	storage_checker: StorageChecker<UncheckedStorages, CheckedStorages>,
 }
 
+/// Takes an "action" as a closure and wraps it in an [`AssertableDiffableStorageAction`].
 // a better name is welcome
-pub fn do_action<UncheckedStorages: PalletStorageHList, F: FnOnce()>(
+pub fn do_action<UncheckedStorages: PalletStorageHList, F: FnOnce() -> R, R>(
 	f: F,
-) -> AssertableDiffableStorageAction<UncheckedStorages, (), F> {
+) -> AssertableDiffableStorageAction<UncheckedStorages, (), F, R> {
 	AssertableDiffableStorageAction {
 		f,
 		storage_checker: StorageChecker { expected_changes: (), _marker: PhantomData },
 	}
 }
 
-impl<CheckedStorages, UncheckedStorages, F>
-	AssertableDiffableStorageAction<UncheckedStorages, CheckedStorages, F>
+impl<CheckedStorages, UncheckedStorages, F, R>
+	AssertableDiffableStorageAction<UncheckedStorages, CheckedStorages, F, R>
 where
 	UncheckedStorages: PalletStorageHList,
 	CheckedStorages: PalletStorageHList,
-	F: FnOnce(),
+	F: FnOnce() -> R,
 {
 	#[must_use = "check_storage does nothing on it's own, assert_storage_changes must be called to actually do the checks"]
 	pub fn check_storage<T: CheckStorage, Index>(
@@ -49,6 +56,7 @@ where
 		<UncheckedStorages as Find<T, Index>>::Remainder,
 		(T, CheckedStorages),
 		F,
+		R,
 	>
 	where
 		<T::Value as Diffable>::ChangeSet: Debug,
@@ -62,8 +70,8 @@ where
 	}
 }
 
-impl<CheckedStorages, UncheckedStorages, F>
-	AssertableDiffableStorageAction<UncheckedStorages, CheckedStorages, F>
+impl<CheckedStorages, UncheckedStorages, F, R>
+	AssertableDiffableStorageAction<UncheckedStorages, CheckedStorages, F, R>
 where
 	UncheckedStorages: PalletStorageHList,
 	CheckedStorages: PalletStorageHList,
@@ -82,12 +90,24 @@ where
 		(&'static str, &'static str),
 		Option<String>,
 	)>,
-	F: FnOnce(),
+	F: FnOnce() -> R,
 {
-	pub fn assert_storage_changes(self) {
-		let maybe_errors = self
-			.storage_checker
-			.check(self.f)
+	/// Ties all the magic together!
+	///
+	/// Asserts that the actual storage changes were as expected.
+	///
+	/// # Assertions
+	///
+	/// - Storages not explicitly checked to have a change will be asserted to be unchanged.
+	/// - Storages that were checked are asserted to have the expected changes.
+	///
+	/// All failed assertions are collected, and this function will panic with the found errors. The
+	/// precise format of this output is subject to change and should not be relied on.
+	#[allow(clippy::missing_panics_doc)] // it's supposed to panic
+	pub fn assert_storage_changes(self) -> R {
+		let (r, assertions) = self.storage_checker.check(self.f);
+
+		let maybe_errors = assertions
 			.into_iter()
 			.filter_map(|(storage, maybe_error)| maybe_error.map(|error| (storage, error)))
 			.map(|((k1, k2), v)| format!("ERROR at storage {k1}/{k2}: {v}"))
@@ -96,32 +116,8 @@ where
 		if !maybe_errors.is_empty() {
 			panic!("{}", maybe_errors.join("\n\n"));
 		}
-	}
-}
 
-// REVIEW(benluelo): Should this be generic? Or should it have an `Item` associated type?
-pub trait HListIntoIterator<T> {
-	type Iterator: Iterator<Item = T>;
-
-	fn into_iter(self) -> Self::Iterator;
-}
-
-impl<T> HListIntoIterator<T> for () {
-	type Iterator = iter::Empty<T>;
-
-	fn into_iter(self) -> Self::Iterator {
-		iter::empty()
-	}
-}
-
-impl<Head, Tail> HListIntoIterator<Head> for (Head, Tail)
-where
-	Tail: HListIntoIterator<Head>,
-{
-	type Iterator = iter::Chain<iter::Once<Head>, Tail::Iterator>;
-
-	fn into_iter(self) -> Self::Iterator {
-		iter::once(self.0).chain(self.1.into_iter())
+		r
 	}
 }
 
@@ -156,14 +152,15 @@ impl<UncheckedStorages: PalletStorageHList, CheckedStorages: PalletStorageHList>
 	}
 }
 
-impl<PalletStorages: PalletStorageHList> StorageChecker<PalletStorages, ()> {
-	/// Creates a new [`StorageTester`] with the provided pallet storages and with all storages
-	/// unchecked.
-	#[allow(clippy::new_without_default)]
-	pub fn new() -> StorageChecker<PalletStorages, ()> {
-		StorageChecker { expected_changes: (), _marker: PhantomData }
-	}
-}
+// impl<PalletStorages: PalletStorageHList> StorageChecker<PalletStorages, ()> {
+// 	/// Creates a new [`StorageTester`] with the provided pallet storages and with all storages
+// 	/// unchecked.
+// 	#[allow(clippy::new_without_default)]
+// 	#[must_use = "constructing a `StorageChecker` does nothing on it's own"]
+// 	fn new() -> StorageChecker<PalletStorages, ()> {
+// 		StorageChecker { expected_changes: (), _marker: PhantomData }
+// 	}
+// }
 
 impl<UncheckedStorages, CheckedStorages> StorageChecker<UncheckedStorages, CheckedStorages>
 where
@@ -175,17 +172,20 @@ where
 		Concat<Zipped<CheckedStorages::NamesOutput, AssertionOutputOf<CheckedStorages>>>,
 {
 	#[allow(clippy::type_complexity)]
-	pub(crate) fn check<F: FnOnce()>(
+	pub(crate) fn check<F: FnOnce() -> R, R>(
 		self,
 		f: F,
-	) -> Concatenated<
-		Zipped<UncheckedStorages::NamesOutput, AssertionOutputOf<UncheckedStorages>>,
-		Zipped<CheckedStorages::NamesOutput, AssertionOutputOf<CheckedStorages>>,
-	> {
+	) -> (
+		R,
+		Concatenated<
+			Zipped<UncheckedStorages::NamesOutput, AssertionOutputOf<UncheckedStorages>>,
+			Zipped<CheckedStorages::NamesOutput, AssertionOutputOf<CheckedStorages>>,
+		>,
+	) {
 		let unchecked_value_before_f = UncheckedStorages::current_value();
 		let checked_value_before_f = CheckedStorages::current_value();
 
-		f();
+		let r = f();
 
 		// let expected_unchecked_diff = Diff::NotChanged;
 
@@ -209,7 +209,7 @@ where
 		let unchecked_assertions =
 			UncheckedStorages::names().zip(unchecked_diff.assert_unchanged());
 
-		unchecked_assertions.concat(checked_assertions)
+		(r, unchecked_assertions.concat(checked_assertions))
 	}
 }
 

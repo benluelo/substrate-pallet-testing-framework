@@ -22,3 +22,4 @@ spaces_around_ranges = false
 trailing_comma = "Vertical"
 trailing_semicolon = true
 use_field_init_shorthand = true
+

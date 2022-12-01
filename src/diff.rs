@@ -126,7 +126,7 @@ mod test_btree_map_diff {
 
 		let updated = [(1, 10), (2, 20), (3, 30)].into_iter().collect::<BTreeMap<u32, u32>>();
 
-		assert_eq!(map.diff(updated), Diff::NotChanged)
+		assert_eq!(map.diff(updated), Diff::NotChanged);
 	}
 
 	#[test]
@@ -141,7 +141,7 @@ mod test_btree_map_diff {
 			Diff::ChangedTo(
 				[(4, MapValueDiff::Added(40))].into_iter().collect::<BTreeMap<u32, _>>()
 			)
-		)
+		);
 	}
 }
 
