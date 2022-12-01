@@ -75,8 +75,6 @@ impl<CheckedStorages, UncheckedStorages, F, R>
 where
 	UncheckedStorages: PalletStorageHList,
 	CheckedStorages: PalletStorageHList,
-	// <CheckedStorages as PalletStorageHList>::CurrentValue:
-	// 	DiffableHList<ChangeSet = ExpectedChangesOf<CheckedStorages>>,
 	UncheckedStorages::NamesOutput: HZippable<AssertionOutputOf<UncheckedStorages>>,
 	CheckedStorages::NamesOutput: HZippable<AssertionOutputOf<CheckedStorages>>,
 	Zipped<UncheckedStorages::NamesOutput, AssertionOutputOf<UncheckedStorages>>:
