@@ -33,7 +33,72 @@ algorithms used by the pallet. There should be no tests requiring a runtime
 here. This is a very limited scope by design, as most pallet tests will be
 written in the integration tests.
 
-# Pallet Integration Tests
+### Pallet Integration Tests
+
+#### The Problem
+
+Rust tests are compiled as a standalone binary per test; this means that they can't
+be generic (and DI is impossible on the type level).
+
+#### Possible solutions:
+
+> Define test functions without the `#[test]` attribute, and manually call them in a test
+
+Pros:
+
+- Tests can be generic over the runtime, allowing for DI
+- Tests aren't limited to being `fn() -> ()` (i.e. they can take args and return values)
+
+Cons:
+
+- Lots of manual work required to run tests. Consider the following example:
+
+  ```rust
+  // in some-pallet/src/testing.rs:
+  fn test_something<T: Config>() {
+     // snip
+  }
+  
+  // in some-runtime/tests/some-pallet.rs:
+  
+  use crate::*;
+  use some_pallet::testing::*;
+  
+  fn test_something() {
+     test_something::<Runtime>();
+  }
+  ```
+  
+  The entire pallet's test suite has to be copy-pasted for every runtime it's tested on, which
+  is very error prone and lots of work.
+- Backtraces become slightly harder to read (although they're already not great with the externalities)
+  TODO: Maybe write a backtrace parser? Something like https://github.com/auxoncorp/tnfilt
+
+> Use a build.rs file to automatically generate something that can take a runtime type and create
+a test suite
+
+More information on build scripts: https://doc.rust-lang.org/cargo/reference/build-script-examples.html#code-generation
+
+The build script could read the source code of the crate and generate a macro_rules! that would
+generate the the boilerplate seen above.
+
+Pros:
+
+ - Simple end-user experience, just invoke a macro to generate a test suite for a pallet
+ 
+Cons:
+
+ - This requires the pallet developer to write the build script; however this could be abstracted
+  away into something similar to https://github.com/paritytech/substrate/blob/11c50578549969979121577cde987ad3f9d95bd8/utils/wasm-builder/src/lib.rs
+
+> Write a custom test harness
+
+https://doc.rust-lang.org/unstable-book/language-features/custom-test-frameworks.html
+https://rust-lang.github.io/rfcs/2318-custom-test-frameworks.html
+https://os.phil-opp.com/testing/#custom-test-frameworks
+https://www.infinyon.com/blog/2021/04/rust-custom-test-harness/
+
+This sounds like fun
 
 TODO: Finish writing this
 
