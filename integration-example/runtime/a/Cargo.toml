@@ -1,0 +1,125 @@
+[package]
+edition = "2021"
+name    = "a"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package.metadata.docs.rs]
+targets = ["x86_64-unknown-linux-gnu"]
+
+[dependencies]
+# local
+pallet-example = { path = "../../pallets/pallet-example", default-features = false }
+
+# crates.io
+parity-scale-codec = { workspace = true, default-features = false, features = [
+  "derive",
+] }
+scale-info = { workspace = true, default-features = false, features = [
+  "derive",
+] }
+
+# FRAME
+frame-executive   = { workspace = true, default-features = false }
+frame-support     = { workspace = true, default-features = false }
+frame-system      = { workspace = true, default-features = false }
+frame-try-runtime = { workspace = true, default-features = false, optional = true }
+
+# pallets
+pallet-aura                       = { workspace = true, default-features = false }
+pallet-balances                   = { workspace = true, default-features = false }
+pallet-grandpa                    = { workspace = true, default-features = false }
+pallet-randomness-collective-flip = { workspace = true, default-features = false }
+pallet-sudo                       = { workspace = true, default-features = false }
+pallet-timestamp                  = { workspace = true, default-features = false }
+pallet-transaction-payment        = { workspace = true, default-features = false }
+
+# substrate primitives
+sp-api              = { workspace = true, default-features = false }
+sp-block-builder    = { workspace = true, default-features = false }
+sp-consensus-aura   = { workspace = true, default-features = false }
+sp-core             = { workspace = true, default-features = false }
+sp-inherents        = { workspace = true, default-features = false }
+sp-offchain         = { workspace = true, default-features = false }
+sp-runtime          = { workspace = true, default-features = false }
+sp-session          = { workspace = true, default-features = false }
+sp-std              = { workspace = true, default-features = false }
+sp-transaction-pool = { workspace = true, default-features = false }
+sp-version          = { workspace = true, default-features = false }
+
+# Used for the node template's RPCs
+frame-system-rpc-runtime-api               = { workspace = true, default-features = false }
+pallet-transaction-payment-rpc-runtime-api = { workspace = true, default-features = false }
+
+# Used for runtime benchmarking
+frame-benchmarking        = { workspace = true, default-features = false, optional = true }
+frame-system-benchmarking = { workspace = true, default-features = false, optional = true }
+
+[dev-dependencies]
+# local
+pallet-example = { path = "../../pallets/pallet-example", features = [
+  "testing",
+] }
+
+[build-dependencies]
+substrate-wasm-builder = { workspace = true }
+
+[features]
+default = ["std"]
+runtime-benchmarks = [
+  "frame-benchmarking/runtime-benchmarks",
+  "frame-support/runtime-benchmarks",
+  "frame-system-benchmarking/runtime-benchmarks",
+  "frame-system/runtime-benchmarks",
+  "pallet-balances/runtime-benchmarks",
+  "pallet-grandpa/runtime-benchmarks",
+  "pallet-timestamp/runtime-benchmarks",
+  # "pallet-example/runtime-benchmarks",
+  "sp-runtime/runtime-benchmarks",
+]
+std = [
+  "frame-try-runtime?/std",
+  "frame-system-benchmarking?/std",
+  "frame-benchmarking?/std",
+  "parity-scale-codec/std",
+  "scale-info/std",
+  "frame-executive/std",
+  "frame-support/std",
+  "frame-system-rpc-runtime-api/std",
+  "frame-system/std",
+  "frame-try-runtime/std",
+  "pallet-aura/std",
+  "pallet-balances/std",
+  "pallet-grandpa/std",
+  "pallet-randomness-collective-flip/std",
+  "pallet-sudo/std",
+  "pallet-timestamp/std",
+  "pallet-transaction-payment-rpc-runtime-api/std",
+  "pallet-transaction-payment/std",
+  "pallet-example/std",
+  "sp-api/std",
+  "sp-block-builder/std",
+  "sp-consensus-aura/std",
+  "sp-core/std",
+  "sp-inherents/std",
+  "sp-offchain/std",
+  "sp-runtime/std",
+  "sp-session/std",
+  "sp-std/std",
+  "sp-transaction-pool/std",
+  "sp-version/std",
+]
+try-runtime = [
+  "frame-try-runtime",
+  "frame-executive/try-runtime",
+  "frame-system/try-runtime",
+  "frame-support/try-runtime",
+  "pallet-aura/try-runtime",
+  "pallet-balances/try-runtime",
+  "pallet-grandpa/try-runtime",
+  "pallet-randomness-collective-flip/try-runtime",
+  "pallet-sudo/try-runtime",
+  "pallet-timestamp/try-runtime",
+  "pallet-transaction-payment/try-runtime",
+]

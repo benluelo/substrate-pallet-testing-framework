@@ -7,8 +7,6 @@
     pkgs,
     ...
   }: {
-    # Definitions like this are entirely equivalent to the ones
-    # you may have directly in flake.nix.
     packages = {
       fmt = pkgs.writeShellApplication {
         name = "fmt";
@@ -24,7 +22,7 @@
           # .nix
           find . -name "*.nix" -type f -print0 | xargs -0 alejandra;
           # .toml
-          taplo fmt;
+          taplo fmt --config="taplo.toml";
           # .rs
           cargo fmt;
           # .md

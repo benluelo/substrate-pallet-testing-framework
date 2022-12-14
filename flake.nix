@@ -2,8 +2,8 @@
   description = "A very basic flake";
 
   inputs = {
-    flake-parts.url = "github:hercules-ci/flake-parts";
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
   };
 
   outputs = {
@@ -33,9 +33,8 @@
         # module parameters provide easy access to attributes of the same
         # system.
 
-        # packages = {
-        #   fmt = pkgs.callPackage ./nix.fmt;
-        # };
+        packages = {
+        };
       };
 
       flake = {

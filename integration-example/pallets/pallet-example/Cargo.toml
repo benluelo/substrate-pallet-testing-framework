@@ -1,0 +1,40 @@
+[package]
+edition = "2021"
+name    = "pallet-example"
+version = "0.1.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+frame-support = { workspace = true }
+frame-system  = { workspace = true }
+
+parity-scale-codec = { workspace = true, features = ["derive"] }
+scale-info         = { workspace = true, features = ["derive"] }
+# frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, path = "../../../../frame/benchmarking" }
+sp-block-builder = { workspace = true, optional = true }
+change-set = { path  = "../../../change-set", optional = true }
+
+[dev-dependencies]
+# sp-core = { version = "7.0.0", default-features = false, path = "../../../../primitives/core" }
+# sp-io = { version = "7.0.0", default-features = false, path = "../../../../primitives/io" }
+# sp-runtime = { version = "7.0.0", default-features = false, path = "../../../../primitives/runtime" }
+
+[build-dependencies]
+test-builder = { path = "../../../test-builder" }
+
+[features]
+default = ["std"]
+std = [
+  "parity-scale-codec/std",
+  # "frame-benchmarking?/std",
+  "frame-support/std",
+  "frame-system/std",
+  "scale-info/std",
+]
+testing = [
+  "sp-block-builder",
+  "change-set",
+]
+# runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
+# try-runtime = ["frame-support/try-runtime"]
