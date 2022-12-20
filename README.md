@@ -37,17 +37,19 @@ written in the integration tests.
 
 #### The Problem
 
-Rust tests are compiled as a standalone binary per test; this means that they can't
-be generic (and DI is impossible on the type level).
+Rust tests are compiled as a standalone binary per test; this means that they
+can't be generic (and DI is impossible on the type level).
 
 #### Possible solutions:
 
-> Define test functions without the `#[test]` attribute, and manually call them in a test
+> Define test functions without the `#[test]` attribute, and manually call them
+> in a test
 
 Pros:
 
 - Tests can be generic over the runtime, allowing for DI
-- Tests aren't limited to being `fn() -> ()` (i.e. they can take args and return values)
+- Tests aren't limited to being `fn() -> ()` (i.e. they can take args and return
+  values)
 
 Cons:
 
@@ -58,38 +60,43 @@ Cons:
   fn test_something<T: Config>() {
      // snip
   }
-  
+
   // in some-runtime/tests/some-pallet.rs:
-  
+
   use crate::*;
   use some_pallet::testing::*;
-  
+
   fn test_something() {
      test_something::<Runtime>();
   }
   ```
-  
-  The entire pallet's test suite has to be copy-pasted for every runtime it's tested on, which
-  is very error prone and lots of work.
-- Backtraces become slightly harder to read (although they're already not great with the externalities)
-  TODO: Maybe write a backtrace parser? Something like https://github.com/auxoncorp/tnfilt
 
-> Use a build.rs file to automatically generate something that can take a runtime type and create
-a test suite
+  The entire pallet's test suite has to be copy-pasted for every runtime it's
+  tested on, which is very error prone and lots of work.
 
-More information on build scripts: https://doc.rust-lang.org/cargo/reference/build-script-examples.html#code-generation
+- Backtraces become slightly harder to read (although they're already not great
+  with the externalities) TODO: Maybe write a backtrace parser? Something like
+  https://github.com/auxoncorp/tnfilt
 
-The build script could read the source code of the crate and generate a macro_rules! that would
-generate the the boilerplate seen above.
+> Use a build.rs file to automatically generate something that can take a
+> runtime type and create a test suite
+
+More information on build scripts:
+https://doc.rust-lang.org/cargo/reference/build-script-examples.html#code-generation
+
+The build script could read the source code of the crate and generate a
+macro_rules! that would generate the the boilerplate seen above.
 
 Pros:
 
- - Simple end-user experience, just invoke a macro to generate a test suite for a pallet
- 
+- Simple end-user experience, just invoke a macro to generate a test suite for a
+  pallet
+
 Cons:
 
- - This requires the pallet developer to write the build script; however this could be abstracted
-  away into something similar to https://github.com/paritytech/substrate/blob/11c50578549969979121577cde987ad3f9d95bd8/utils/wasm-builder/src/lib.rs
+- This requires the pallet developer to write the build script; however this
+  could be abstracted away into something similar to
+  https://github.com/paritytech/substrate/blob/11c50578549969979121577cde987ad3f9d95bd8/utils/wasm-builder/src/lib.rs
 
 > Write a custom test harness
 

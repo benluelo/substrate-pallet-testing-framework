@@ -12,8 +12,8 @@ frame-system  = { workspace = true }
 parity-scale-codec = { workspace = true, features = ["derive"] }
 scale-info         = { workspace = true, features = ["derive"] }
 # frame-benchmarking = { version = "4.0.0-dev", default-features = false, optional = true, path = "../../../../frame/benchmarking" }
+change-set       = { path = "../../../change-set", optional = true }
 sp-block-builder = { workspace = true, optional = true }
-change-set = { path  = "../../../change-set", optional = true }
 
 [dev-dependencies]
 # sp-core = { version = "7.0.0", default-features = false, path = "../../../../primitives/core" }
@@ -32,9 +32,6 @@ std = [
   "frame-system/std",
   "scale-info/std",
 ]
-testing = [
-  "sp-block-builder",
-  "change-set",
-]
+testing = ["sp-block-builder", "change-set"]
 # runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks"]
 # try-runtime = ["frame-support/try-runtime"]
