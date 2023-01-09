@@ -271,6 +271,8 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the pallet-example in pallets/template.
 impl pallet_example::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+
+	const MAX: u32 = 10;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

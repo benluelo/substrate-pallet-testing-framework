@@ -1,5 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use frame_support::{traits::ConstU32, BoundedVec};
 pub use pallet::*;
 
 #[cfg(test)]
@@ -19,6 +20,8 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
+	use crate::Bounded;
+
 	#[pallet::pallet]
 	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
@@ -28,11 +31,17 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Because this pallet emits events, it depends on the runtime's definition of an event.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		const MAX: u32;
 	}
 
 	#[pallet::storage]
 	#[pallet::getter(fn something)]
 	pub type Something<T> = StorageValue<_, u32>;
+
+	// #[pallet::storage]
+	// pub type Bounded<T> =
+	// 	StorageMap<_, Blake2_128Concat, u32, u32, OptionQuery, GetDefault, >;
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
@@ -73,7 +82,19 @@ pub mod pallet {
 
 			<Something<T>>::put(new);
 
+			let bounded = Bounded::<{ T::MAX }>::new();
+
 			Ok(())
 		}
+	}
+}
+
+struct Bounded<const MAX: u32> {
+	vec: BoundedVec<u32, ConstU32<MAX>>,
+}
+
+impl<const MAX: u32> Bounded<MAX> {
+	fn new() -> Self {
+		Self { vec: Default::default() }
 	}
 }

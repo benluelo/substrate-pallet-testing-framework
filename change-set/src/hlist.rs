@@ -76,6 +76,36 @@ where
 	}
 }
 
+/// Concat two [`HList`]s
+pub trait Concat<Rhs> {
+	type Output;
+
+	fn concat(self, rhs: Rhs) -> Self::Output;
+}
+
+impl<Rhs> Concat<Rhs> for ()
+where
+	Rhs: HList,
+{
+	type Output = Rhs;
+
+	fn concat(self, rhs: Rhs) -> Rhs {
+		rhs
+	}
+}
+
+impl<Head, Tail, Rhs> Concat<Rhs> for (Head, Tail)
+where
+	Tail: Concat<Rhs>,
+	Rhs: HList,
+{
+	type Output = (Head, <Tail as Concat<Rhs>>::Output);
+
+	fn concat(self, rhs: Rhs) -> Self::Output {
+		(self.0, self.1.concat(rhs))
+	}
+}
+
 /// Diff [`HList`] trait
 ///
 /// Will be implemented on an [`HList`] of `(Diff<T>, (Diff<U>, (..., ())))`
@@ -139,36 +169,6 @@ where
 		};
 
 		(output, self.1.assert_unchanged())
-	}
-}
-
-/// Concat two [`HList`]s
-pub trait Concat<Rhs> {
-	type Output;
-
-	fn concat(self, rhs: Rhs) -> Self::Output;
-}
-
-impl<Rhs> Concat<Rhs> for ()
-where
-	Rhs: HList,
-{
-	type Output = Rhs;
-
-	fn concat(self, rhs: Rhs) -> Rhs {
-		rhs
-	}
-}
-
-impl<Head, Tail, Rhs> Concat<Rhs> for (Head, Tail)
-where
-	Tail: Concat<Rhs>,
-	Rhs: HList,
-{
-	type Output = (Head, <Tail as Concat<Rhs>>::Output);
-
-	fn concat(self, rhs: Rhs) -> Self::Output {
-		(self.0, self.1.concat(rhs))
 	}
 }
 
